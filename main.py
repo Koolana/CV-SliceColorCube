@@ -70,14 +70,14 @@ if __name__ == "__main__":
         cv2.waitKey(100)
 
     # save as gif
-    imageio.mimsave('example.gif', imgs, 'GIF-FI', **{'fps':20.0, 'quantizer':'nq'})
+    imageio.mimsave('img/example.gif', imgs, 'GIF-FI', **{'fps':20.0, 'quantizer':'nq'})
     print('gif saved\n')
 
     # save as png
     grayValues = [50, 130, 210]
 
     for grayValue in grayValues:
-        cv2.imwrite('gray' + str(grayValue) + '.png',
+        cv2.imwrite('img/gray' + str(grayValue) + '.png',
                     cv2.cvtColor((createCubeSlice(grayValue, invE) * 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
 
         print('for gray: ' + str(grayValue) + ' saved\n')
