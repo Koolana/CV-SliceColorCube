@@ -3,13 +3,10 @@ import numpy as np
 import math
 import time
 import multiprocessing as mp
-from multiprocessing import Pool
-
-width = int(255 * math.sqrt(3))
-height = int(255 * math.sqrt(3))
+import imageio
 
 # output: transformation matrix between the coordinate system
-#         of the colored cube and the slice plane with shape (3, 3)
+#         of the colored cube and the slice plane, shape: (3, 3)
 def getInvTransformMat():
     e1 = np.array([1, 1, 1])
     e1n = e1 / np.linalg.norm(e1)
@@ -30,8 +27,10 @@ def getInvTransformMat():
 # input: grayValue - value of gray color intensive [0; 255]
 #        invE - transformation matrix between the coordinate system
 #               of the colored cube and the slice plane
-# output: image of the slice plane as numpy array with shape (width, height, 3)
+# output: image of the slice plane as numpy array, shape: (width, height, 3)
 def createCubeSlice(grayValue, invE):
+    width = int(255 * math.sqrt(3))
+    height = int(255 * math.sqrt(3))
     grayValue = grayValue * math.sqrt(3)
 
     img = np.zeros([width, height, 3])
@@ -53,12 +52,32 @@ def createCubeSlice(grayValue, invE):
 if __name__ == "__main__":
     invE = getInvTransformMat()
 
-    multiple_results = [Pool().apply_async(createCubeSlice, (grayValue, invE,)) for grayValue in range(0, 256, 5)]
+    # create pool of process
+    multiple_results = [mp.Pool().apply_async(createCubeSlice, (grayValue, invE,)) for grayValue in range(0, 256, 5)]
 
     time.sleep(1)
 
+    imgs = []
+
+    # show and save to list
     for res in multiple_results:
-        cv2.imshow('Cube slice', res.get())
+        img = res.get()
+        img = (img * 255).astype(np.uint8)
+
+        cv2.imshow('Cube slice', cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
+        imgs.append(img)
         cv2.waitKey(100)
 
-    cv2.waitKey(0)
+    # save as gif
+    imageio.mimsave('example.gif', imgs, 'GIF-FI', **{'fps':20.0, 'quantizer':'nq'})
+    print('gif saved\n')
+
+    # save as png
+    grayValues = [50, 130, 210]
+
+    for grayValue in grayValues:
+        cv2.imwrite('gray' + str(grayValue) + '.png',
+                    cv2.cvtColor((createCubeSlice(grayValue, invE) * 255).astype(np.uint8), cv2.COLOR_RGB2BGR))
+
+        print('for gray: ' + str(grayValue) + ' saved\n')
